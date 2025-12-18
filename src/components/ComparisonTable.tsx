@@ -14,6 +14,7 @@ import {
 import { Card } from '@/components/ui/card';
 import { CheckCircle, XCircle, ArrowUp, ArrowDown, AlertTriangle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { ContentModal } from '@/components/ContentModal';
 
 // Helper para acessar coluna com fallback
 function getCol(row: any, name: string): any {
@@ -434,12 +435,19 @@ export function ComparisonTable({ results, sevenTotal = 0, serurTotal = 0, seven
                             )}
                           </TableCell>
                           <TableCell className="text-xs text-gray-700 py-2.5 max-w-xs">
-                            <div title={getCol(serurRow, 'Conteúdo') || ''} className="truncate">
-                              {getCol(serurRow, 'Conteúdo') || '-'}
-                            </div>
+                            <ContentModal content={getCol(serurRow, 'Conteúdo') || ''} trigger={
+                              <span className="text-blue-600 hover:text-blue-700 cursor-pointer">
+                                Ver conteúdo
+                              </span>
+                            } />
                           </TableCell>
                           <TableCell className="text-xs py-2.5 text-center">
-                            <CheckCircle className="h-4 w-4 text-green-600 mx-auto" />
+                            <div className="flex items-center justify-center gap-1">
+                              <CheckCircle className="h-4 w-4 text-green-600" />
+                              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold">
+                                {serurRows.length}
+                              </span>
+                            </div>
                           </TableCell>
                           <TableCell className="text-xs py-2.5">
                             {result.isDuplicate ? (
@@ -507,13 +515,20 @@ export function ComparisonTable({ results, sevenTotal = 0, serurTotal = 0, seven
                       )}
                     </TableCell>
                     <TableCell className="text-xs text-gray-700 py-2.5 max-w-xs">
-                      <div title={getCol(serurRow, 'Conteúdo') || ''} className="truncate">
-                        {getCol(serurRow, 'Conteúdo') || '-'}
-                      </div>
+                      <ContentModal content={getCol(serurRow, 'Conteúdo') || ''} trigger={
+                        <span className="text-blue-600 hover:text-blue-700 cursor-pointer">
+                          Ver conteúdo
+                        </span>
+                      } />
                     </TableCell>
                     <TableCell className="text-xs py-2.5 text-center">
                       {serurRow ? (
-                        <CheckCircle className="h-4 w-4 text-green-600 mx-auto" />
+                        <div className="flex items-center justify-center gap-1">
+                          <CheckCircle className="h-4 w-4 text-green-600" />
+                          <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold">
+                            {serurRows.length}
+                          </span>
+                        </div>
                       ) : (
                         <XCircle className="h-4 w-4 text-gray-300 mx-auto" />
                       )}
