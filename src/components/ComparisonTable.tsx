@@ -382,7 +382,7 @@ export function ComparisonTable({ results, sevenTotal = 0, serurTotal = 0, seven
                 if (result.isDuplicate && serurRows.length > 1) {
                   return (
                     <React.Fragment key={idx}>
-                      {serurRows.map((serurRow, serurIdx) => (
+                      {serurRows.map((eachSerurRow, serurIdx) => (
                         <TableRow 
                           key={`${idx}-${serurIdx}`} 
                           className={`border-b border-gray-100 hover:bg-yellow-50 ${
@@ -423,7 +423,7 @@ export function ComparisonTable({ results, sevenTotal = 0, serurTotal = 0, seven
                             </div>
                           </TableCell>
                           <TableCell className="text-xs text-gray-700 py-2.5">
-                            {getCol(sevenRow, 'UF') || getCol(serurRow, 'UF') || '-'}
+                            {getCol(sevenRow, 'UF') || getCol(eachSerurRow, 'UF') || '-'}
                           </TableCell>
                           <TableCell className="text-xs text-gray-700 py-2.5">
                             {getCol(sevenRow, 'Status Publicação') ? (
@@ -435,7 +435,7 @@ export function ComparisonTable({ results, sevenTotal = 0, serurTotal = 0, seven
                             )}
                           </TableCell>
                           <TableCell className="text-xs text-gray-700 py-2.5 max-w-xs">
-                            <ContentModal content={getCol(serurRow, 'Conteúdo') || ''} trigger={
+                            <ContentModal content={String(getCol(eachSerurRow, 'Conteúdo') || '').trim()} trigger={
                               <span className="text-blue-600 hover:text-blue-700 cursor-pointer">
                                 Ver conteúdo
                               </span>
@@ -515,7 +515,7 @@ export function ComparisonTable({ results, sevenTotal = 0, serurTotal = 0, seven
                       )}
                     </TableCell>
                     <TableCell className="text-xs text-gray-700 py-2.5 max-w-xs">
-                      <ContentModal content={getCol(serurRow, 'Conteúdo') || ''} trigger={
+                      <ContentModal content={String(getCol(serurRow, 'Conteúdo') || '').trim()} trigger={
                         <span className="text-blue-600 hover:text-blue-700 cursor-pointer">
                           Ver conteúdo
                         </span>
