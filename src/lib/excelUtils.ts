@@ -214,32 +214,23 @@ export function compareExcels(
   const normalizedSeven = normalizeSevenData(sevenData);
   const normalizedSerur = normalizeSevenData(serurData);
 
-  // Detectar duplicatas nos campos gerais (processo, nome encontrado, cliente, UF)
-  function checkForDuplicates(row: any, rows: any[]): { isDuplicate: boolean; duplicateFields: string[] } {
-    const duplicateFields: string[] = [];
-    const processo = row.processo_normalizado;
-    const nomeEncontrado = String(getColumnValue(row, 'Nome Encontrado') || '').trim();
-    const cliente = String(getColumnValue(row, 'Cliente') || '').trim();
-    const uf = String(getColumnValue(row, 'UF') || '').trim();
+  // Criar maps para contar ocorrências de cada processo
+  const sevenProcessoCount = new Map<string, number>();
+  const serurProcessoCount = new Map<string, number>();
 
-    // Procura por outro registro com mesmo processo, nome, cliente, uf
-    const duplicateCount = rows.filter(r => {
-      if (r === row) return false;
-      if (r.processo_normalizado === processo) duplicateFields.push('Processo');
-      if (String(getColumnValue(r, 'Nome Encontrado') || '').trim() === nomeEncontrado && nomeEncontrado) duplicateFields.push('Nome Encontrado');
-      if (String(getColumnValue(r, 'Cliente') || '').trim() === cliente && cliente) duplicateFields.push('Cliente');
-      if (String(getColumnValue(r, 'UF') || '').trim() === uf && uf) duplicateFields.push('UF');
-      
-      return duplicateFields.length > 0;
-    }).length;
+  normalizedSeven.forEach((row) => {
+    if (row.processo_normalizado) {
+      sevenProcessoCount.set(row.processo_normalizado, (sevenProcessoCount.get(row.processo_normalizado) || 0) + 1);
+    }
+  });
 
-    return {
-      isDuplicate: duplicateCount > 0 || duplicateFields.length > 0,
-      duplicateFields: [...new Set(duplicateFields)]
-    };
-  }
+  normalizedSerur.forEach((row) => {
+    if (row.processo_normalizado) {
+      serurProcessoCount.set(row.processo_normalizado, (serurProcessoCount.get(row.processo_normalizado) || 0) + 1);
+    }
+  });
 
-  // Criar maps
+  // Criar maps principais
   const sevenMap = new Map<string, any[]>();
   const serurMap = new Map<string, any[]>();
 
@@ -269,7 +260,10 @@ export function compareExcels(
     processedProcessos.add(processo);
     const serurRows = serurMap.get(processo) || [];
     const sevenRow = sevenRows[0];
-    const { isDuplicate, duplicateFields } = checkForDuplicates(sevenRow, normalizedSeven);
+    
+    // Verificar se há duplicatas: se há mais de 1 registro com o mesmo processo
+    const isDuplicate = sevenRows.length > 1;
+    const duplicateFields = isDuplicate ? ['Processo'] : [];
 
     results.push({
       status: serurRows.length > 0 ? 'MATCH' : 'ONLY_SEVEN',
@@ -284,14 +278,14 @@ export function compareExcels(
   // Processos só do Serur
   serurMap.forEach((serurRows, processo) => {
     if (!processedProcessos.has(processo)) {
-      const serurRow = serurRows[0];
-      const { isDuplicate, duplicateFields } = checkForDuplicates(serurRow, normalizedSerur);
+      const isDuplicate = serurRows.length > 1;
+      const duplicateFields = isDuplicate ? ['Processo'] : [];
       
       results.push({
         status: 'ONLY_SERUR',
         processo,
         sevenRows: [],
-        serurRow,
+        serurRow: serurRows[0],
         isDuplicate,
         duplicateFields,
       });
