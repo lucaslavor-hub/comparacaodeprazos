@@ -267,7 +267,7 @@ export function ComparisonTable({ results, sevenTotal = 0, serurTotal = 0, seven
         <div className="overflow-x-auto">
           {/* Filter Row */}
           <div className="bg-gray-100 border-b border-gray-200 p-3">
-            <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
+            <div className="grid grid-cols-4 md:grid-cols-9 gap-2">
               {/* Status - SELECT */}
               <select
                 value={filters.status}
