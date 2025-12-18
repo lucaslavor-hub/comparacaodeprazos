@@ -135,7 +135,7 @@ export function ComparisonDashboard() {
               className="h-10 w-auto"
             />
             <div className="border-l border-gray-300 pl-3">
-              <h1 className="text-lg font-semibold text-gray-900">Comparação de Prazos</h1>
+              <h1 className="text-lg font-semibold text-gray-900">Publicações</h1>
               <p className="text-xs text-gray-600">Sincronize dados entre Seven iPrazos e Lig Contato</p>
             </div>
           </div>

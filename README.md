@@ -1,4 +1,4 @@
-# Sistema de Comparação de Prazos
+# Publicações
 
 Um aplicativo web moderno para carregar, visualizar e comparar dados de arquivos Excel com foco em análise de prazos.
 
