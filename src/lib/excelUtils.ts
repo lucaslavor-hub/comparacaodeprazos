@@ -15,7 +15,8 @@ export interface ComparisonResult {
   status: 'MATCH' | 'ONLY_SEVEN' | 'ONLY_SERUR';
   processo: string;
   sevenRows: any[];
-  serurRow: any | null;
+  serurRows: any[];
+  serurRow: any | null; // Mantém para compatibilidade
   isDuplicate: boolean;
   duplicateFields: string[];
 }
@@ -259,16 +260,16 @@ export function compareExcels(
   sevenMap.forEach((sevenRows, processo) => {
     processedProcessos.add(processo);
     const serurRows = serurMap.get(processo) || [];
-    const sevenRow = sevenRows[0];
     
     // Verificar se há duplicatas: se há mais de 1 registro com o mesmo processo
-    const isDuplicate = sevenRows.length > 1;
+    const isDuplicate = sevenRows.length > 1 || serurRows.length > 1;
     const duplicateFields = isDuplicate ? ['Processo'] : [];
 
     results.push({
       status: serurRows.length > 0 ? 'MATCH' : 'ONLY_SEVEN',
       processo,
       sevenRows,
+      serurRows,
       serurRow: serurRows.length > 0 ? serurRows[0] : null,
       isDuplicate,
       duplicateFields,
@@ -285,6 +286,7 @@ export function compareExcels(
         status: 'ONLY_SERUR',
         processo,
         sevenRows: [],
+        serurRows,
         serurRow: serurRows[0],
         isDuplicate,
         duplicateFields,

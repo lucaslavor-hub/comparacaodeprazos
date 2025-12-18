@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { ComparisonResult } from '@/lib/excelUtils';
 import { formatDate } from '@/lib/excelUtils';
 import {
@@ -267,7 +267,7 @@ export function ComparisonTable({ results, sevenTotal = 0, serurTotal = 0, seven
         <div className="overflow-x-auto">
           {/* Filter Row */}
           <div className="bg-gray-100 border-b border-gray-200 p-3">
-            <div className="grid grid-cols-4 md:grid-cols-9 gap-2">
+            <div className="grid grid-cols-4 md:grid-cols-10 gap-2">
               {/* Status - SELECT */}
               <select
                 value={filters.status}
@@ -367,6 +367,7 @@ export function ComparisonTable({ results, sevenTotal = 0, serurTotal = 0, seven
                 <TableHead className="text-xs font-semibold text-gray-700"><SortHeader label="Cliente" sortKey="cliente" /></TableHead>
                 <TableHead className="text-xs font-semibold text-gray-700"><SortHeader label="UF" sortKey="uf" /></TableHead>
                 <TableHead className="text-xs font-semibold text-gray-700"><SortHeader label="Status Pub." sortKey="statusPub" /></TableHead>
+                <TableHead className="text-xs font-semibold text-gray-700"><SortHeader label="Conteúdo" sortKey="conteudo" /></TableHead>
                 <TableHead className="text-xs font-semibold text-gray-700"><SortHeader label="No Lig Contato?" sortKey="noSerur" /></TableHead>
                 <TableHead className="text-xs font-semibold text-gray-700">Duplicado</TableHead>
               </TableRow>
@@ -374,8 +375,90 @@ export function ComparisonTable({ results, sevenTotal = 0, serurTotal = 0, seven
             <TableBody>
               {sortedResults.map((result, idx) => {
                 const sevenRow = result.sevenRows[0];
-                const serurRow = result.serurRow;
+                const serurRows = result.serurRows || [];
+                
+                // Se há múltiplos Serur rows, mostrar um por linha
+                if (result.isDuplicate && serurRows.length > 1) {
+                  return (
+                    <React.Fragment key={idx}>
+                      {serurRows.map((serurRow, serurIdx) => (
+                        <TableRow 
+                          key={`${idx}-${serurIdx}`} 
+                          className={`border-b border-gray-100 hover:bg-yellow-50 ${
+                            result.isDuplicate ? 'bg-yellow-50' : 'hover:bg-gray-50'
+                          }`}
+                        >
+                          <TableCell className="text-xs py-2.5">
+                            <span
+                              className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
+                                result.status === 'MATCH'
+                                  ? 'bg-green-100 text-green-700'
+                                  : result.status === 'ONLY_SEVEN'
+                                    ? 'bg-blue-100 text-blue-700'
+                                    : 'bg-orange-100 text-orange-700'
+                              }`}
+                            >
+                              {result.status === 'MATCH'
+                                ? 'Correspondência'
+                                : result.status === 'ONLY_SEVEN'
+                                  ? 'Só Seven'
+                                  : 'Só Serur'}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-xs font-mono text-gray-900 py-2.5">
+                            {result.processo}
+                          </TableCell>
+                          <TableCell className="text-xs text-gray-700 py-2.5">
+                            {sevenRow ? formatDate(getCol(sevenRow, 'Data Diário')) : '-'}
+                          </TableCell>
+                          <TableCell className="text-xs text-gray-700 py-2.5 max-w-xs">
+                            <div title={getCol(sevenRow, 'Nome Encontrado') || ''} className="truncate">
+                              {getCol(sevenRow, 'Nome Encontrado') || '-'}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-xs text-gray-700 py-2.5 max-w-[120px]">
+                            <div title={getCol(sevenRow, 'Cliente') || ''} className="truncate">
+                              {getCol(sevenRow, 'Cliente') || '-'}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-xs text-gray-700 py-2.5">
+                            {getCol(sevenRow, 'UF') || getCol(serurRow, 'UF') || '-'}
+                          </TableCell>
+                          <TableCell className="text-xs text-gray-700 py-2.5">
+                            {getCol(sevenRow, 'Status Publicação') ? (
+                              <span title={String(getCol(sevenRow, 'Status Publicação'))} className="truncate inline-block max-w-xs">
+                                {String(getCol(sevenRow, 'Status Publicação')).substring(0, 20)}
+                              </span>
+                            ) : (
+                              '-'
+                            )}
+                          </TableCell>
+                          <TableCell className="text-xs text-gray-700 py-2.5 max-w-xs">
+                            <div title={getCol(serurRow, 'Conteúdo') || ''} className="truncate">
+                              {getCol(serurRow, 'Conteúdo') || '-'}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-xs py-2.5 text-center">
+                            <CheckCircle className="h-4 w-4 text-green-600 mx-auto" />
+                          </TableCell>
+                          <TableCell className="text-xs py-2.5">
+                            {result.isDuplicate ? (
+                              <div className="flex items-center gap-1">
+                                <AlertTriangle className="h-4 w-4 text-yellow-600 flex-shrink-0" />
+                                <span className="text-yellow-700 font-medium">Duplicado ({serurRows.length})</span>
+                              </div>
+                            ) : (
+                              <span className="text-gray-400">-</span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </React.Fragment>
+                  );
+                }
 
+                // Caso normal: uma linha por resultado
+                const serurRow = serurRows[0] || null;
                 return (
                   <TableRow key={idx} className="border-b border-gray-100 hover:bg-gray-50">
                     <TableCell className="text-xs py-2.5">
@@ -401,23 +484,32 @@ export function ComparisonTable({ results, sevenTotal = 0, serurTotal = 0, seven
                     <TableCell className="text-xs text-gray-700 py-2.5">
                       {sevenRow ? formatDate(getCol(sevenRow, 'Data Diário')) : '-'}
                     </TableCell>
-                    <TableCell className="text-xs text-gray-700 py-2.5 max-w-xs truncate">
-                      {getCol(sevenRow, 'Nome Encontrado') || '-'}
+                    <TableCell className="text-xs text-gray-700 py-2.5 max-w-xs">
+                      <div title={getCol(sevenRow, 'Nome Encontrado') || ''} className="truncate">
+                        {getCol(sevenRow, 'Nome Encontrado') || '-'}
+                      </div>
                     </TableCell>
-                    <TableCell className="text-xs text-gray-700 py-2.5 max-w-xs truncate">
-                      {getCol(sevenRow, 'Cliente') || '-'}
+                    <TableCell className="text-xs text-gray-700 py-2.5 max-w-[120px]">
+                      <div title={getCol(sevenRow, 'Cliente') || ''} className="truncate">
+                        {getCol(sevenRow, 'Cliente') || '-'}
+                      </div>
                     </TableCell>
                     <TableCell className="text-xs text-gray-700 py-2.5">
                       {getCol(sevenRow, 'UF') || getCol(serurRow, 'UF') || '-'}
                     </TableCell>
                     <TableCell className="text-xs text-gray-700 py-2.5">
                       {getCol(sevenRow, 'Status Publicação') ? (
-                        <span className="truncate inline-block max-w-xs">
+                        <span title={String(getCol(sevenRow, 'Status Publicação'))} className="truncate inline-block max-w-xs">
                           {String(getCol(sevenRow, 'Status Publicação')).substring(0, 20)}
                         </span>
                       ) : (
                         '-'
                       )}
+                    </TableCell>
+                    <TableCell className="text-xs text-gray-700 py-2.5 max-w-xs">
+                      <div title={getCol(serurRow, 'Conteúdo') || ''} className="truncate">
+                        {getCol(serurRow, 'Conteúdo') || '-'}
+                      </div>
                     </TableCell>
                     <TableCell className="text-xs py-2.5 text-center">
                       {serurRow ? (
