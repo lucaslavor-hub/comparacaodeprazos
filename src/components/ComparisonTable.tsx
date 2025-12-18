@@ -12,7 +12,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Card } from '@/components/ui/card';
-import { CheckCircle, XCircle, ArrowUp, ArrowDown } from 'lucide-react';
+import { CheckCircle, XCircle, ArrowUp, ArrowDown, AlertTriangle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
 // Helper para acessar coluna com fallback
@@ -49,6 +49,10 @@ export function ComparisonTable({ results, sevenTotal = 0, serurTotal = 0, seven
   });
 
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
+
+  // Verificar se há duplicatas
+  const hasDuplicates = results.some(r => r.isDuplicate);
+  const duplicatesCount = results.filter(r => r.isDuplicate).length;
 
   // Função para extrair opções únicas
   const getUniqueOptions = (key: string): string[] => {
@@ -211,6 +215,21 @@ export function ComparisonTable({ results, sevenTotal = 0, serurTotal = 0, seven
 
   return (
     <div className="space-y-6">
+      {/* Duplicate Alert */}
+      {hasDuplicates && (
+        <Card className="border border-yellow-300 bg-yellow-50 p-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-yellow-900">⚠️ Duplicados detectados</p>
+              <p className="text-xs text-yellow-800 mt-1">
+                {duplicatesCount} registro(s) com campos duplicados (Processo, Nome Encontrado, Cliente ou UF). Veja a coluna "Duplicado" para detalhes.
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="border border-gray-200 p-4">
@@ -349,6 +368,7 @@ export function ComparisonTable({ results, sevenTotal = 0, serurTotal = 0, seven
                 <TableHead className="text-xs font-semibold text-gray-700"><SortHeader label="UF" sortKey="uf" /></TableHead>
                 <TableHead className="text-xs font-semibold text-gray-700"><SortHeader label="Status Pub." sortKey="statusPub" /></TableHead>
                 <TableHead className="text-xs font-semibold text-gray-700"><SortHeader label="No Lig Contato?" sortKey="noSerur" /></TableHead>
+                <TableHead className="text-xs font-semibold text-gray-700">Duplicado</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -404,6 +424,18 @@ export function ComparisonTable({ results, sevenTotal = 0, serurTotal = 0, seven
                         <CheckCircle className="h-4 w-4 text-green-600 mx-auto" />
                       ) : (
                         <XCircle className="h-4 w-4 text-gray-300 mx-auto" />
+                      )}
+                    </TableCell>
+                    <TableCell className="text-xs py-2.5">
+                      {result.isDuplicate ? (
+                        <div className="flex items-center gap-1">
+                          <AlertTriangle className="h-4 w-4 text-yellow-600 flex-shrink-0" />
+                          <span className="text-yellow-700 font-medium" title={result.duplicateFields.join(', ')}>
+                            {result.duplicateFields.length > 0 ? result.duplicateFields.join(', ') : 'Sim'}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400">-</span>
                       )}
                     </TableCell>
                   </TableRow>
