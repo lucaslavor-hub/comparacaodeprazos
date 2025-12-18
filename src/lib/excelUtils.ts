@@ -215,72 +215,85 @@ export function compareExcels(
   const normalizedSeven = normalizeSevenData(sevenData);
   const normalizedSerur = normalizeSevenData(serurData);
 
-  // Criar maps para contar ocorrências de cada processo
-  const sevenProcessoCount = new Map<string, number>();
-  const serurProcessoCount = new Map<string, number>();
+  // Criar chave composta: processo + conteúdo (para detectar duplicatas reais)
+  function createKey(row: any): string {
+    const processo = row.processo_normalizado || '';
+    const conteudo = String(getColumnValue(row, 'Conteúdo') || '').trim();
+    // Usar hash simples do conteúdo para evitar strings enormes
+    return `${processo}|${conteudo.substring(0, 100)}`;
+  }
 
-  normalizedSeven.forEach((row) => {
-    if (row.processo_normalizado) {
-      sevenProcessoCount.set(row.processo_normalizado, (sevenProcessoCount.get(row.processo_normalizado) || 0) + 1);
-    }
-  });
-
-  normalizedSerur.forEach((row) => {
-    if (row.processo_normalizado) {
-      serurProcessoCount.set(row.processo_normalizado, (serurProcessoCount.get(row.processo_normalizado) || 0) + 1);
-    }
-  });
-
-  // Criar maps principais
+  // Agrupar por chave composta (processo + conteúdo)
   const sevenMap = new Map<string, any[]>();
-  const serurMap = new Map<string, any[]>();
+  const sevenByProcesso = new Map<string, any[]>(); // para comparação com Serur
 
   normalizedSeven.forEach((row) => {
     if (row.processo_normalizado) {
-      if (!sevenMap.has(row.processo_normalizado)) {
-        sevenMap.set(row.processo_normalizado, []);
+      const key = createKey(row);
+      if (!sevenMap.has(key)) {
+        sevenMap.set(key, []);
       }
-      sevenMap.get(row.processo_normalizado)!.push(row);
+      sevenMap.get(key)!.push(row);
+
+      // Também guardar por processo para comparação posterior
+      if (!sevenByProcesso.has(row.processo_normalizado)) {
+        sevenByProcesso.set(row.processo_normalizado, []);
+      }
+      sevenByProcesso.get(row.processo_normalizado)!.push(row);
     }
   });
 
+  const serurMap = new Map<string, any[]>();
+  const serurByProcesso = new Map<string, any[]>();
+
   normalizedSerur.forEach((row) => {
     if (row.processo_normalizado) {
-      if (!serurMap.has(row.processo_normalizado)) {
-        serurMap.set(row.processo_normalizado, []);
+      const key = createKey(row);
+      if (!serurMap.has(key)) {
+        serurMap.set(key, []);
       }
-      serurMap.get(row.processo_normalizado)!.push(row);
+      serurMap.get(key)!.push(row);
+
+      if (!serurByProcesso.has(row.processo_normalizado)) {
+        serurByProcesso.set(row.processo_normalizado, []);
+      }
+      serurByProcesso.get(row.processo_normalizado)!.push(row);
     }
   });
 
   const results: ComparisonResult[] = [];
-  const processedProcessos = new Set<string>();
+  const processedKeys = new Set<string>();
 
-  // Processos do Seven
-  sevenMap.forEach((sevenRows, processo) => {
-    processedProcessos.add(processo);
-    const serurRows = serurMap.get(processo) || [];
+  // Processar cada chave única do Seven (processo + conteúdo)
+  sevenMap.forEach((sevenRows, key) => {
+    processedKeys.add(key);
     
-    // Verificar se há duplicatas: se há mais de 1 registro com o mesmo processo
-    const isDuplicate = sevenRows.length > 1 || serurRows.length > 1;
-    const duplicateFields = isDuplicate ? ['Processo'] : [];
+    const processo = sevenRows[0].processo_normalizado;
+    const serurRowsForProcesso = serurByProcesso.get(processo) || [];
+    
+    // Verificar se há duplicatas REAIS: múltiplos registros com mesma chave
+    const isDuplicate = sevenRows.length > 1;
+    const duplicateFields = isDuplicate ? ['Processo + Conteúdo'] : [];
 
     results.push({
-      status: serurRows.length > 0 ? 'MATCH' : 'ONLY_SEVEN',
+      status: serurRowsForProcesso.length > 0 ? 'MATCH' : 'ONLY_SEVEN',
       processo,
       sevenRows,
-      serurRows,
-      serurRow: serurRows.length > 0 ? serurRows[0] : null,
+      serurRows: serurRowsForProcesso,
+      serurRow: serurRowsForProcesso.length > 0 ? serurRowsForProcesso[0] : null,
       isDuplicate,
       duplicateFields,
     });
   });
 
-  // Processos só do Serur
-  serurMap.forEach((serurRows, processo) => {
-    if (!processedProcessos.has(processo)) {
+  // Processar chaves únicas do Serur que não estão no Seven
+  serurMap.forEach((serurRows, key) => {
+    if (!processedKeys.has(key)) {
+      const processo = serurRows[0].processo_normalizado;
+      
+      // Verificar se há duplicatas reais no Serur
       const isDuplicate = serurRows.length > 1;
-      const duplicateFields = isDuplicate ? ['Processo'] : [];
+      const duplicateFields = isDuplicate ? ['Processo + Conteúdo'] : [];
       
       results.push({
         status: 'ONLY_SERUR',
