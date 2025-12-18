@@ -18,6 +18,8 @@ import { ContentModal } from '@/components/ContentModal';
 
 // Helper para acessar coluna com fallback
 function getCol(row: any, name: string): any {
+  if (!row) return undefined;
+  
   if (row && row.hasOwnProperty(name)) {
     return row[name];
   }
@@ -28,6 +30,17 @@ function getCol(row: any, name: string): any {
       return row[key];
     }
   }
+  
+  // Se procura por "Conteúdo", tenta variações
+  if (normalized === 'conteúdo') {
+    for (const key in row || {}) {
+      const keyLower = String(key).trim().toLowerCase();
+      if (keyLower.includes('conteúdo') || keyLower.includes('conteudo')) {
+        return row[key];
+      }
+    }
+  }
+  
   return undefined;
 }
 
@@ -435,11 +448,15 @@ export function ComparisonTable({ results, sevenTotal = 0, serurTotal = 0, seven
                             )}
                           </TableCell>
                           <TableCell className="text-xs text-gray-700 py-2.5 max-w-xs">
-                            <ContentModal content={String(getCol(eachSerurRow, 'Conteúdo') || '').trim()} trigger={
-                              <span className="text-blue-600 hover:text-blue-700 cursor-pointer">
-                                Ver conteúdo
-                              </span>
-                            } />
+                            <ContentModal 
+                              content={String(getCol(eachSerurRow, 'Conteúdo') || '').trim()} 
+                              debugInfo={`Colunas disponíveis: ${eachSerurRow ? Object.keys(eachSerurRow).join(', ') : 'nenhuma'}`}
+                              trigger={
+                                <span className="text-blue-600 hover:text-blue-700 cursor-pointer">
+                                  Ver conteúdo
+                                </span>
+                              } 
+                            />
                           </TableCell>
                           <TableCell className="text-xs py-2.5 text-center">
                             <div className="flex items-center justify-center gap-1">
@@ -515,11 +532,15 @@ export function ComparisonTable({ results, sevenTotal = 0, serurTotal = 0, seven
                       )}
                     </TableCell>
                     <TableCell className="text-xs text-gray-700 py-2.5 max-w-xs">
-                      <ContentModal content={String(getCol(serurRow, 'Conteúdo') || '').trim()} trigger={
-                        <span className="text-blue-600 hover:text-blue-700 cursor-pointer">
-                          Ver conteúdo
-                        </span>
-                      } />
+                      <ContentModal 
+                        content={String(getCol(serurRow, 'Conteúdo') || '').trim()} 
+                        debugInfo={`Colunas disponíveis: ${serurRow ? Object.keys(serurRow).join(', ') : 'nenhuma'}`}
+                        trigger={
+                          <span className="text-blue-600 hover:text-blue-700 cursor-pointer">
+                            Ver conteúdo
+                          </span>
+                        } 
+                      />
                     </TableCell>
                     <TableCell className="text-xs py-2.5 text-center">
                       {serurRow ? (

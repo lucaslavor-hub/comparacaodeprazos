@@ -8,9 +8,10 @@ import { Card } from '@/components/ui/card';
 interface ContentModalProps {
   content: string;
   trigger?: React.ReactNode;
+  debugInfo?: string;
 }
 
-export function ContentModal({ content, trigger }: ContentModalProps) {
+export function ContentModal({ content, trigger, debugInfo }: ContentModalProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const preview = content && content.length > 50 
@@ -44,7 +45,12 @@ export function ContentModal({ content, trigger }: ContentModalProps) {
               </div>
               
               <div className="bg-gray-50 border border-gray-200 rounded p-4 text-xs text-gray-800 whitespace-pre-wrap break-words max-h-[60vh] overflow-auto font-mono">
-                {content || 'Sem conteúdo'}
+                {content ? content : (
+                  <div className="text-gray-500">
+                    <p>Sem conteúdo</p>
+                    {debugInfo && <p className="mt-2 text-gray-400">{debugInfo}</p>}
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-end gap-2">
