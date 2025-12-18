@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { FileUpload } from '@/components/FileUpload';
 import { ComparisonTable } from '@/components/ComparisonTable';
-import { FilterNome } from '@/components/FilterNome';
+import { FilterNomeMulti } from '@/components/FilterNomeMulti';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -13,6 +13,7 @@ import {
   compareExcels,
   getNomeEncontradoOptions,
   filterSevenByNome,
+  validateExcelColumns,
   ComparisonResult,
 } from '@/lib/excelUtils';
 import { AlertCircle, Loader2 } from 'lucide-react';
@@ -25,14 +26,14 @@ export function ComparisonDashboard() {
   const [loading, setLoading] = useState(false);
   const [loadingSeven, setLoadingSeven] = useState(false);
   const [error, setError] = useState<string>('');
-  const [nomeFilter, setNomeFilter] = useState<string | null>(null);
+  const [nomeFilter, setNomeFilter] = useState<string[]>([]);
   const [results, setResults] = useState<ComparisonResult[] | null>(null);
   const [nomeOptions, setNomeOptions] = useState<string[]>([]);
 
   const handleFile7Select = async (file: File | null) => {
     setFile7(file);
     setResults(null);
-    setNomeFilter(null);
+    setNomeFilter([]);
     if (file) {
       await loadFile(file, setData7, true);
     } else {
@@ -60,15 +61,33 @@ export function ComparisonDashboard() {
       }
       setError('');
       const excelData = await readExcelFile(file);
+      
+      // Validar colunas esperadas
+      const firstSheet = Object.keys(excelData.sheets)[0];
+      const headers = excelData.headers[firstSheet] || [];
+      
+      const requiredColumns = isSeven
+        ? ['Número Processo', 'Conteúdo', 'Nome Encontrado']
+        : ['Número do Processo'];
+      
+      const validation = validateExcelColumns(headers, requiredColumns);
+      
+      if (!validation.valid) {
+        const fileType = isSeven ? 'Seven iPrazos (relatório)' : 'Lig Contato';
+        setError(`❌ Arquivo ${fileType} inválido. Colunas faltando: ${validation.missingColumns.join(', ')}`);
+        setData(null);
+        return;
+      }
+      
       setData(excelData);
 
       if (isSeven) {
-        const firstSheet = Object.values(excelData.sheets)[0] || [];
-        const options = getNomeEncontradoOptions(firstSheet);
+        const firstSheetData = Object.values(excelData.sheets)[0] || [];
+        const options = getNomeEncontradoOptions(firstSheetData);
         setNomeOptions(options);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar arquivo');
+      setError(`❌ Erro ao carregar arquivo: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
       setData(null);
     } finally {
       if (isSeven) {
@@ -94,8 +113,8 @@ export function ComparisonDashboard() {
 
       const filtered7 = filterSevenByNome(seven7Sheet, nomeFilter);
       
-      if (filtered7.length === 0) {
-        setError(`Nenhum processo encontrado para o nome: "${nomeFilter}"`);
+      if (filtered7.length === 0 && nomeFilter.length > 0) {
+        setError(`Nenhum processo encontrado para os nomes selecionados`);
         setResults([]);
         setLoading(false);
         return;
@@ -166,7 +185,7 @@ export function ComparisonDashboard() {
         {data7 && nomeOptions.length > 0 && (
           <div className="mb-10">
             <h2 className="mb-4 text-sm font-semibold text-gray-900">2. Filtrar dados</h2>
-            <FilterNome options={nomeOptions} value={nomeFilter} onChange={setNomeFilter} />
+            <FilterNomeMulti options={nomeOptions} value={nomeFilter} onChange={setNomeFilter} />
           </div>
         )}
 

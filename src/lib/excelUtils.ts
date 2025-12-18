@@ -67,6 +67,27 @@ function normalizeRowData(row: any): any {
   return normalized;
 }
 
+// Valida se o arquivo tem as colunas esperadas
+export function validateExcelColumns(headers: string[], requiredColumns: string[]): { valid: boolean; missingColumns: string[] } {
+  const missingColumns: string[] = [];
+  
+  for (const required of requiredColumns) {
+    const found = headers.some(h => 
+      normalizeColumnName(h) === normalizeColumnName(required) ||
+      normalizeColumnName(h).includes(normalizeColumnName(required.split(/[, ]/)[0]))
+    );
+    
+    if (!found) {
+      missingColumns.push(required);
+    }
+  }
+  
+  return {
+    valid: missingColumns.length === 0,
+    missingColumns
+  };
+}
+
 export async function readExcelFile(file: File): Promise<ExcelData> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -165,11 +186,14 @@ export function getNomeEncontradoOptions(sevenRows: any[]): string[] {
   return Array.from(nomes).sort();
 }
 
-export function filterSevenByNome(sevenRows: any[], nomeEncontrado: string | null): any[] {
-  if (!nomeEncontrado) return sevenRows;
+export function filterSevenByNome(sevenRows: any[], nomeEncontrado: string | string[] | null): any[] {
+  if (!nomeEncontrado || (Array.isArray(nomeEncontrado) && nomeEncontrado.length === 0)) return sevenRows;
+  
+  const nomes = Array.isArray(nomeEncontrado) ? nomeEncontrado : [nomeEncontrado];
+  
   return sevenRows.filter((row) => {
     const nome = getColumnValue(row, 'Nome Encontrado');
-    return String(nome ?? '').trim() === nomeEncontrado;
+    return nomes.includes(String(nome ?? '').trim());
   });
 }
 
@@ -215,27 +239,12 @@ export function compareExcels(
   const normalizedSeven = normalizeSevenData(sevenData);
   const normalizedSerur = normalizeSevenData(serurData);
 
-  // Criar chave composta: processo + conteúdo (para detectar duplicatas reais)
-  function createKey(row: any): string {
-    const processo = row.processo_normalizado || '';
-    const conteudo = String(getColumnValue(row, 'Conteúdo') || '').trim();
-    // Usar hash simples do conteúdo para evitar strings enormes
-    return `${processo}|${conteudo.substring(0, 100)}`;
-  }
-
-  // Agrupar por chave composta (processo + conteúdo)
-  const sevenMap = new Map<string, any[]>();
-  const sevenByProcesso = new Map<string, any[]>(); // para comparação com Serur
+  // Agrupar por processo (chave simples para compatibilidade com Lig Contato)
+  const sevenByProcesso = new Map<string, any[]>();
+  const serurByProcesso = new Map<string, any[]>();
 
   normalizedSeven.forEach((row) => {
     if (row.processo_normalizado) {
-      const key = createKey(row);
-      if (!sevenMap.has(key)) {
-        sevenMap.set(key, []);
-      }
-      sevenMap.get(key)!.push(row);
-
-      // Também guardar por processo para comparação posterior
       if (!sevenByProcesso.has(row.processo_normalizado)) {
         sevenByProcesso.set(row.processo_normalizado, []);
       }
@@ -243,17 +252,8 @@ export function compareExcels(
     }
   });
 
-  const serurMap = new Map<string, any[]>();
-  const serurByProcesso = new Map<string, any[]>();
-
   normalizedSerur.forEach((row) => {
     if (row.processo_normalizado) {
-      const key = createKey(row);
-      if (!serurMap.has(key)) {
-        serurMap.set(key, []);
-      }
-      serurMap.get(key)!.push(row);
-
       if (!serurByProcesso.has(row.processo_normalizado)) {
         serurByProcesso.set(row.processo_normalizado, []);
       }
@@ -262,18 +262,17 @@ export function compareExcels(
   });
 
   const results: ComparisonResult[] = [];
-  const processedKeys = new Set<string>();
+  const processedProcessos = new Set<string>();
 
-  // Processar cada chave única do Seven (processo + conteúdo)
-  sevenMap.forEach((sevenRows, key) => {
-    processedKeys.add(key);
+  // Processar cada processo no Seven
+  sevenByProcesso.forEach((sevenRows, processo) => {
+    processedProcessos.add(processo);
     
-    const processo = sevenRows[0].processo_normalizado;
     const serurRowsForProcesso = serurByProcesso.get(processo) || [];
     
-    // Verificar se há duplicatas REAIS: múltiplos registros com mesma chave
+    // Verificar se há duplicatas: múltiplos registros com mesmo processo
     const isDuplicate = sevenRows.length > 1;
-    const duplicateFields = isDuplicate ? ['Processo + Conteúdo'] : [];
+    const duplicateFields = isDuplicate ? ['Número Processo'] : [];
 
     results.push({
       status: serurRowsForProcesso.length > 0 ? 'MATCH' : 'ONLY_SEVEN',
@@ -286,14 +285,11 @@ export function compareExcels(
     });
   });
 
-  // Processar chaves únicas do Serur que não estão no Seven
-  serurMap.forEach((serurRows, key) => {
-    if (!processedKeys.has(key)) {
-      const processo = serurRows[0].processo_normalizado;
-      
-      // Verificar se há duplicatas reais no Serur
+  // Processar processos únicos do Serur que não estão no Seven
+  serurByProcesso.forEach((serurRows, processo) => {
+    if (!processedProcessos.has(processo)) {
       const isDuplicate = serurRows.length > 1;
-      const duplicateFields = isDuplicate ? ['Processo + Conteúdo'] : [];
+      const duplicateFields = isDuplicate ? ['Número Processo'] : [];
       
       results.push({
         status: 'ONLY_SERUR',
