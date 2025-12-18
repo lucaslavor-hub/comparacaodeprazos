@@ -15,8 +15,9 @@ import {
   filterSevenByNome,
   validateExcelColumns,
   ComparisonResult,
+  exportResultsToExcel,
 } from '@/lib/excelUtils';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2, Download } from 'lucide-react';
 
 export function ComparisonDashboard() {
   const [file7, setFile7] = useState<File | null>(null);
@@ -222,6 +223,19 @@ export function ComparisonDashboard() {
             serurTotal={dataSr ? (Object.values(dataSr.sheets)[0] as any[]).length : 0}
             sevenFilteredTotal={nomeFilter && data7 ? filterSevenByNome(Object.values(data7.sheets)[0] as any[], nomeFilter).length : 0}
           />
+        )}
+
+        {/* Export Button */}
+        {results && results.length > 0 && (
+          <div className="mb-10 flex justify-end">
+            <Button
+              onClick={() => exportResultsToExcel(results, `comparacao-${new Date().toISOString().split('T')[0]}.xlsx`)}
+              className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Exportar para Excel
+            </Button>
+          </div>
         )}
 
         {/* Empty State */}

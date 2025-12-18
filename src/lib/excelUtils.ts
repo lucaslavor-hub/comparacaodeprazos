@@ -305,3 +305,107 @@ export function compareExcels(
 
   return results;
 }
+export function exportResultsToExcel(
+  results: ComparisonResult[],
+  fileName: string = 'comparacao-publicacoes.xlsx'
+): void {
+  const exportData: any[] = [];
+
+  // Cabeçalho com informações gerais
+  const timestamp = new Date().toLocaleString('pt-BR');
+  exportData.push(['RELATÓRIO DE COMPARAÇÃO DE PUBLICAÇÕES']);
+  exportData.push(['Gerado em:', timestamp]);
+  exportData.push(['']);
+  
+  // Estatísticas
+  const matches = results.filter(r => r.status === 'MATCH').length;
+  const onlySeven = results.filter(r => r.status === 'ONLY_SEVEN').length;
+  const onlySerur = results.filter(r => r.status === 'ONLY_SERUR').length;
+  
+  exportData.push(['ESTATÍSTICAS']);
+  exportData.push(['Processos correspondentes (MATCH):', matches]);
+  exportData.push(['Processos apenas em Seven iPrazos:', onlySeven]);
+  exportData.push(['Processos apenas em Lig Contato:', onlySerur]);
+  exportData.push(['Total de processos:', results.length]);
+  exportData.push(['']);
+  
+  // Dados detalhados
+  exportData.push(['DETALHES']);
+  exportData.push([
+    'Status',
+    'Número Processo',
+    'Duplicado?',
+    'Nome Encontrado (Seven)',
+    'UF (Seven)',
+    'Cliente (Seven)',
+    'Status Publicação (Seven)',
+    'Diário (Lig Contato)',
+    'Vara (Lig Contato)',
+    'Nome Pesquisado (Lig Contato)',
+  ]);
+
+  results.forEach((result) => {
+    const sevenRow = result.sevenRows[0];
+    const serurRow = result.serurRow;
+    
+    const statusLabel = 
+      result.status === 'MATCH' ? '✓ CORRESPONDÊNCIA' :
+      result.status === 'ONLY_SEVEN' ? '⚠ APENAS SEVEN' :
+      '⚠ APENAS LIG CONTATO';
+
+    exportData.push([
+      statusLabel,
+      result.processo,
+      result.isDuplicate ? 'SIM' : 'NÃO',
+      sevenRow ? getColumnValue(sevenRow, 'Nome Encontrado') : '-',
+      sevenRow ? getColumnValue(sevenRow, 'UF') : '-',
+      sevenRow ? getColumnValue(sevenRow, 'Cliente') : '-',
+      sevenRow ? getColumnValue(sevenRow, 'Status Publicação') : '-',
+      serurRow ? getColumnValue(serurRow, 'Diário') : '-',
+      serurRow ? getColumnValue(serurRow, 'Vara') : '-',
+      serurRow ? getColumnValue(serurRow, 'Nome Pesquisado') : '-',
+    ]);
+
+    // Se há duplicatas, adicionar linhas adicionais
+    if (result.isDuplicate && result.sevenRows.length > 1) {
+      for (let i = 1; i < result.sevenRows.length; i++) {
+        const row = result.sevenRows[i];
+        exportData.push([
+          '⚠ DUPLICADO',
+          result.processo,
+          'SIM',
+          getColumnValue(row, 'Nome Encontrado'),
+          getColumnValue(row, 'UF'),
+          getColumnValue(row, 'Cliente'),
+          getColumnValue(row, 'Status Publicação'),
+          '-',
+          '-',
+          '-',
+        ]);
+      }
+    }
+  });
+
+  // Criar workbook
+  const worksheet = XLSX.utils.aoa_to_sheet(exportData);
+  
+  // Ajustar largura das colunas
+  worksheet['!cols'] = [
+    { wch: 20 },  // Status
+    { wch: 25 },  // Número Processo
+    { wch: 12 },  // Duplicado
+    { wch: 20 },  // Nome Encontrado
+    { wch: 8 },   // UF
+    { wch: 18 },  // Cliente
+    { wch: 18 },  // Status Publicação
+    { wch: 20 },  // Diário
+    { wch: 15 },  // Vara
+    { wch: 20 },  // Nome Pesquisado
+  ];
+
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Comparação');
+
+  // Baixar arquivo
+  XLSX.writeFile(workbook, fileName);
+}
