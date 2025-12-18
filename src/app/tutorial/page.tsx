@@ -221,7 +221,7 @@ export default function Tutorial() {
       <div className="border-t border-gray-200 bg-white py-6 mt-12">
         <div className="mx-auto max-w-4xl px-6">
           <div className="text-center text-sm text-gray-600">
-            <p>© 2024 Serur Advogados. Todos os direitos reservados.</p>
+            <p>© 2025 Serur Advogados. Todos os direitos reservados.</p>
           </div>
         </div>
       </div>

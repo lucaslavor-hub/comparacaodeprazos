@@ -267,7 +267,7 @@ export function ComparisonDashboard() {
         <div className="mx-auto max-w-7xl px-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="text-sm text-gray-600">
-              <p>© 2024 Serur Advogados. Todos os direitos reservados.</p>
+              <p>© 2025 Serur Advogados. Todos os direitos reservados.</p>
             </div>
             <div className="flex items-center gap-6 text-sm">
               <a href="/tutorial" className="text-blue-600 hover:text-blue-700 hover:underline transition-colors">
