@@ -449,8 +449,8 @@ export function ComparisonTable({ results, sevenTotal = 0, serurTotal = 0, seven
                           </TableCell>
                           <TableCell className="text-xs text-gray-700 py-2.5 max-w-xs">
                             <ContentModal 
-                              content={String(getCol(eachSerurRow, 'Conteúdo') || '').trim()} 
-                              debugInfo={`Colunas disponíveis: ${eachSerurRow ? Object.keys(eachSerurRow).join(', ') : 'nenhuma'}`}
+                              content={String(getCol(sevenRow, 'Conteúdo') || '').trim()} 
+                              debugInfo={`Colunas disponíveis: ${sevenRow ? Object.keys(sevenRow).join(', ') : 'nenhuma'}`}
                               trigger={
                                 <span className="text-blue-600 hover:text-blue-700 cursor-pointer">
                                   Ver conteúdo
@@ -533,8 +533,8 @@ export function ComparisonTable({ results, sevenTotal = 0, serurTotal = 0, seven
                     </TableCell>
                     <TableCell className="text-xs text-gray-700 py-2.5 max-w-xs">
                       <ContentModal 
-                        content={String(getCol(serurRow, 'Conteúdo') || '').trim()} 
-                        debugInfo={`Colunas disponíveis: ${serurRow ? Object.keys(serurRow).join(', ') : 'nenhuma'}`}
+                        content={String(getCol(sevenRow, 'Conteúdo') || '').trim()} 
+                        debugInfo={`Colunas disponíveis: ${sevenRow ? Object.keys(sevenRow).join(', ') : 'nenhuma'}`}
                         trigger={
                           <span className="text-blue-600 hover:text-blue-700 cursor-pointer">
                             Ver conteúdo
