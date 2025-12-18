@@ -140,22 +140,28 @@ export function ComparisonDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Header */}
-      <div className="border-b border-gray-200 bg-gray-50">
-        <div className="mx-auto max-w-7xl px-6 py-6">
-          <div className="flex items-center gap-3">
-            <Image
-              src="/logo.svg"
-              alt="Lig Contato"
-              width={120}
-              height={40}
-              priority
-              className="h-10 w-auto"
-            />
-            <div className="border-l border-gray-300 pl-3">
-              <h1 className="text-lg font-semibold text-gray-900">Publicações</h1>
-              <p className="text-xs text-gray-600">Sincronize dados entre Seven iPrazos e Lig Contato</p>
+      <div className="border-b border-gray-200 bg-white shadow-sm">
+        <div className="mx-auto max-w-7xl px-6 py-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Image
+                src="/logo.svg"
+                alt="Lig Contato"
+                width={120}
+                height={40}
+                priority
+                className="h-10 w-auto"
+              />
+              <div className="border-l border-gray-300 pl-4">
+                <h1 className="text-2xl font-bold text-gray-900">Publicações</h1>
+                <p className="text-sm text-gray-600">Sistema de Comparação de Prazos</p>
+              </div>
+            </div>
+            <div className="text-right text-xs text-gray-500">
+              <p>Serur</p>
+              <p className="font-medium text-gray-700">Advogados</p>
             </div>
           </div>
         </div>
@@ -240,6 +246,28 @@ export function ComparisonDashboard() {
             </div>
           </Card>
         )}
+      </div>
+
+      {/* Footer Links */}
+      <div className="border-t border-gray-200 bg-white py-6 mt-12">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-sm text-gray-600">
+              <p>© 2024 Serur Advogados. Todos os direitos reservados.</p>
+            </div>
+            <div className="flex items-center gap-6 text-sm">
+              <a href="/tutorial" className="text-blue-600 hover:text-blue-700 hover:underline transition-colors">
+                📖 Tutorial
+              </a>
+              <a href="/debug-viewer" className="text-gray-600 hover:text-gray-700 hover:underline transition-colors">
+                🔍 Visualizar
+              </a>
+              <a href="/debug-processes" className="text-gray-600 hover:text-gray-700 hover:underline transition-colors">
+                🔎 Debug
+              </a>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
